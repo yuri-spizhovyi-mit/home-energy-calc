@@ -22,9 +22,9 @@ function currentRate() {
   return Number.isFinite(r) && r >= 0 ? r : 0;
 }
 
-function addAppliance(name, watts, hours) {
-  const { watts: w, hours: h } = validateAppliance({ watts, hours });
-  state.appliances.push({ id: Date.now() + Math.random(), name: name.trim() || 'Appliance', watts: w, hours: h });
+function addAppliance(name, watts, hours, quantity = 1) {
+  const { watts: w, hours: h, quantity: q } = validateAppliance({ watts, hours, quantity });
+  state.appliances.push({ id: Date.now() + Math.random(), name: name.trim() || 'Appliance', watts: w, hours: h, quantity: q });
   save();
   render();
 }
@@ -46,6 +46,7 @@ function render() {
   const list = $('list');
   list.replaceChildren();
   $('empty').hidden = state.appliances.length > 0;
+  $('clear-all').hidden = state.appliances.length === 0;
 
   for (const a of state.appliances) {
     const kwh = monthlyKwh(a);
@@ -54,7 +55,7 @@ function render() {
     li.innerHTML = `
       <div class="item-main">
         <div class="item-name"></div>
-        <div class="item-meta">${a.watts} W · ${a.hours} h/day</div>
+        <div class="item-meta">${a.quantity > 1 ? `${a.quantity} × ` : ''}${a.watts} W · ${a.hours} h/day</div>
       </div>
       <div class="item-cost">${formatMoney(cost(kwh, rate))}<small>${formatKwh(kwh)}/mo</small></div>
       <button class="remove" type="button" aria-label="Remove">×</button>`;
@@ -99,12 +100,20 @@ function init() {
   $('add-form').addEventListener('submit', (e) => {
     e.preventDefault();
     try {
-      addAppliance($('name').value, $('watts').value, $('hours').value);
+      addAppliance($('name').value, $('watts').value, $('hours').value, $('quantity').value);
       $('add-form').reset();
+      $('quantity').value = 1;
       $('error').textContent = '';
     } catch (err) {
       $('error').textContent = err.message;
     }
+  });
+
+  $('clear-all').addEventListener('click', () => {
+    if (!window.confirm('Remove all appliances?')) return;
+    state.appliances = [];
+    save();
+    render();
   });
 
   render();

@@ -17,18 +17,20 @@ function toNumber(value) {
 }
 
 /** Throws if the appliance fields are not usable numbers. */
-export function validateAppliance({ watts, hours }) {
+export function validateAppliance({ watts, hours, quantity = 1 }) {
   const w = toNumber(watts);
   const h = toNumber(hours);
+  const q = quantity === '' || quantity == null ? 1 : toNumber(quantity);
   if (Number.isNaN(w) || w < 0) throw new Error('Wattage must be a number of 0 or more');
   if (Number.isNaN(h) || h < 0 || h > 24) throw new Error('Hours per day must be between 0 and 24');
-  return { watts: w, hours: h };
+  if (!Number.isInteger(q) || q < 1 || q > 99) throw new Error('Quantity must be a whole number from 1 to 99');
+  return { watts: w, hours: h, quantity: q };
 }
 
-/** kWh used per day by one appliance. */
+/** kWh used per day by an appliance, times its quantity (default 1). */
 export function dailyKwh(appliance) {
-  const { watts, hours } = validateAppliance(appliance);
-  return (watts * hours) / 1000;
+  const { watts, hours, quantity } = validateAppliance(appliance);
+  return ((watts * hours) / 1000) * quantity;
 }
 
 /** kWh used per month (30 days) by one appliance. */
