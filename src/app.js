@@ -1,4 +1,4 @@
-import { PRESETS, totals, monthlyKwh, cost, validateAppliance, formatMoney, formatKwh } from './calc.js';
+import { PRESETS, totals, monthlyKwh, cost, validateAppliance, formatMoney, formatKwh, costBreakdown } from './calc.js';
 
 const STORAGE_KEY = 'home-energy-calc:v1';
 const $ = (id) => document.getElementById(id);
@@ -61,6 +61,25 @@ function render() {
     li.querySelector('.item-name').textContent = a.name; // user text: never via innerHTML
     li.querySelector('.remove').addEventListener('click', () => removeAppliance(a.id));
     list.append(li);
+  }
+
+  renderChart(rate);
+}
+
+function renderChart(rate) {
+  const chart = $('chart');
+  chart.replaceChildren();
+  $('chart-card').hidden = state.appliances.length === 0;
+
+  for (const row of costBreakdown(state.appliances, rate)) {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="bar-head"><span class="bar-name"></span><span class="bar-val"></span></div>
+      <div class="bar-track"><div class="bar-fill"></div></div>`;
+    li.querySelector('.bar-name').textContent = row.name; // user text: textContent only
+    li.querySelector('.bar-val').textContent = `${formatMoney(row.monthlyCost)} · ${Math.round(row.share * 100)}%`;
+    li.querySelector('.bar-fill').style.width = `${row.barPct}%`;
+    chart.append(li);
   }
 }
 
