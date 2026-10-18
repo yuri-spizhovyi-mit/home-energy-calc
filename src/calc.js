@@ -55,6 +55,27 @@ export function totals(appliances, rate, days = DAYS_PER_MONTH) {
   };
 }
 
+/**
+ * Monthly cost per appliance for the chart, most expensive first.
+ * `share` is the fraction of the total (0..1); `barPct` is the bar length
+ * relative to the most expensive appliance (0..100).
+ */
+export function costBreakdown(appliances, rate, days = DAYS_PER_MONTH) {
+  const rows = appliances.map((a) => ({
+    name: a.name,
+    monthlyCost: cost(monthlyKwh(a, days), rate),
+  }));
+  const total = rows.reduce((sum, r) => sum + r.monthlyCost, 0);
+  const max = Math.max(0, ...rows.map((r) => r.monthlyCost));
+  return rows
+    .map((r) => ({
+      ...r,
+      share: total > 0 ? r.monthlyCost / total : 0,
+      barPct: max > 0 ? (r.monthlyCost / max) * 100 : 0,
+    }))
+    .sort((a, b) => b.monthlyCost - a.monthlyCost);
+}
+
 export function formatMoney(value) {
   return `$${value.toFixed(2)}`;
 }

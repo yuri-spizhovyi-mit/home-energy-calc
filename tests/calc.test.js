@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  dailyKwh, monthlyKwh, cost, totals, validateAppliance, formatMoney, formatKwh, PRESETS,
+  dailyKwh, monthlyKwh, cost, totals, validateAppliance, formatMoney, formatKwh, PRESETS, costBreakdown,
 } from '../src/calc.js';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
@@ -62,4 +62,33 @@ test('formatting helpers', () => {
 test('presets are valid appliances', () => {
   assert.ok(PRESETS.length > 0);
   for (const p of PRESETS) assert.doesNotThrow(() => validateAppliance(p), p.name);
+});
+
+test('costBreakdown sorts by monthly cost, most expensive first', () => {
+  const rows = costBreakdown([
+    { name: 'TV', watts: 100, hours: 4 },
+    { name: 'Heater', watts: 1500, hours: 6 },
+    { name: 'Fridge', watts: 150, hours: 24 },
+  ], 0.1);
+  assert.deepEqual(rows.map((r) => r.name), ['Heater', 'Fridge', 'TV']);
+});
+
+test('costBreakdown computes cost, share and bar length', () => {
+  const rows = costBreakdown([
+    { name: 'A', watts: 1000, hours: 1 }, // 30 kWh -> $3.00
+    { name: 'B', watts: 1000, hours: 3 }, // 90 kWh -> $9.00
+  ], 0.1);
+  close(rows[0].monthlyCost, 9);
+  close(rows[0].share, 0.75);
+  close(rows[0].barPct, 100);
+  close(rows[1].monthlyCost, 3);
+  close(rows[1].share, 0.25);
+  close(rows[1].barPct, 100 / 3);
+});
+
+test('costBreakdown handles empty list and zero rate without dividing by zero', () => {
+  assert.deepEqual(costBreakdown([], 0.12), []);
+  const rows = costBreakdown([{ name: 'A', watts: 1000, hours: 1 }], 0);
+  assert.equal(rows[0].share, 0);
+  assert.equal(rows[0].barPct, 0);
 });
