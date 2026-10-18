@@ -57,6 +57,10 @@ input {
 }
 input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { grid-template-columns: 1fr 1fr 80px; }
+.list-head { display: flex; justify-content: space-between; align-items: baseline; }
+.list-head h2 { margin-bottom: 12px; }
+button.link { font: inherit; font-size: 0.9rem; color: var(--danger); background: none; border: 0; padding: 4px 0 4px 12px; cursor: pointer; }
 .hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
 
 .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }

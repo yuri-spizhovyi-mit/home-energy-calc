@@ -92,3 +92,33 @@ test('costBreakdown handles empty list and zero rate without dividing by zero', 
   assert.equal(rows[0].share, 0);
   assert.equal(rows[0].barPct, 0);
 });
+
+test('quantity multiplies daily and monthly kWh', () => {
+  close(dailyKwh({ watts: 1000, hours: 2, quantity: 3 }), 6);
+  close(monthlyKwh({ watts: 1000, hours: 2, quantity: 3 }), 180);
+});
+
+test('quantity defaults to 1 when missing, empty or null (older saved data)', () => {
+  close(dailyKwh({ watts: 1000, hours: 2 }), 2);
+  close(dailyKwh({ watts: 1000, hours: 2, quantity: '' }), 2);
+  close(dailyKwh({ watts: 1000, hours: 2, quantity: null }), 2);
+});
+
+test('quantity accepts numeric strings from form inputs', () => {
+  assert.equal(validateAppliance({ watts: 1, hours: 1, quantity: '4' }).quantity, 4);
+});
+
+test('invalid quantity is rejected', () => {
+  for (const q of [0, -1, 1.5, 100, 'abc']) {
+    assert.throws(() => validateAppliance({ watts: 100, hours: 1, quantity: q }), /Quantity/, String(q));
+  }
+});
+
+test('totals and costBreakdown include quantity', () => {
+  const list = [{ name: 'Heater', watts: 1000, hours: 1, quantity: 2 }, { name: 'TV', watts: 1000, hours: 1 }];
+  close(totals(list, 0.1).dailyKwh, 3);
+  const rows = costBreakdown(list, 0.1);
+  assert.equal(rows[0].name, 'Heater');
+  close(rows[0].monthlyCost, 6);
+  close(rows[0].share, 2 / 3);
+});
