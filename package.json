@@ -1,0 +1,10 @@
+{
+  "name": "home-energy-calc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Home energy cost calculator",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
